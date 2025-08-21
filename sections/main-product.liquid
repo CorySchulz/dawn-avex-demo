@@ -89,6 +89,11 @@
             {%- case block.type -%}
               {%- when '@app' -%}
                 {% render block %}
+              {%- when 'badge' -%}
+                {% render 'badge', 
+                  shopify_attributes: block.shopify_attributes,
+                  product: product,
+                  placement: 'pdp' %}
               {%- when 'text' -%}
                 <p
                   class="product__text inline-richtext{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}"
@@ -738,6 +743,77 @@
   </div>
 </product-info>
 
+
+<script>
+  
+</script>
+
+
+{% comment %}
+  This section builds out a global Theme object that I like to use
+  to pass in data from Liquid to javascript. Usually I would add this
+  in a theme-scripts.liquid file that gets loaded in the theme.liquid file.
+  This helps centralize and organize the data being passed around.
+{% endcomment %}
+{% assign shop_badges = shop.metafields.custom.badges.value %}
+{% if shop_badges %}
+  <script>
+
+    // set global Theme object
+    var Theme = window.Theme = {}
+
+    // I'm adding the product object here as good practice
+    Theme.product = {{ product | json }};
+
+    // add inventory data separately because it isn't included
+    // in the regular product JSON object
+    Theme.product.inventory = {
+      {% for variant in product.variants %}
+        "{{ variant.id }}": {
+          available: {{ variant.available }},
+          quantity: {{ variant.inventory_quantity | default: 0 }},
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    };
+
+    // load shop badges into global Theme.badges
+    Theme.badges = {};
+    Theme.badges.shop = [
+      {% for badge in shop_badges %}
+        {
+          name: "{{ badge.name | handleize }}",
+          display_text: {{ badge.display_text | json }},
+          bg_color: "{{ badge.bg_color | default: '#000000' }}",
+          text_color: "{{ badge.text_color | default: '#ffffff' }}",
+          enabled: {{ badge.enabled | default: false }}
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    ];
+
+    // load variant badge metadata into Theme.badges
+    Theme.badges.variants = {
+      {% for variant in product.variants %}
+        {% assign variant_badge_list = variant.metafields.custom.badges.value %}
+        "{{ variant.id }}": [
+          {% if variant_badge_list %}
+            {% for badge in variant_badge_list %}
+              "{{ badge.name | handleize }}"{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          {% endif %}
+        ]{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    };
+
+  </script>
+{% endif %}
+
+{% comment %}  
+  for dynamically swapping out the badges values 
+  when the variant object changes
+{% endcomment %}
+<script src="{{ 'badges.js' | asset_url }}" defer="defer"></script>
+
+
 {% schema %}
 {
   "name": "t:sections.main-product.name",
@@ -746,6 +822,11 @@
   "blocks": [
     {
       "type": "@app"
+    },
+    {
+      "type": "badge",
+      "name": "Badge",
+      "settings": []
     },
     {
       "type": "text",

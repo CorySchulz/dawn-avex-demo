@@ -1,0 +1,46 @@
+{% doc %}
+  @description renders a badge (ex: sale, low stock, out of stock) for a given product
+  @param product [product] the product object passed in
+  @param placement [string] where the badge will be placed (ex: "card", "pdp")
+  @param shopify_attributes [string] attributes passed through from a block for the theme customizer
+  @example
+    {% render 'badge', 
+      product: card_product, 
+      placement: 'pdp', 
+      shopify_attributes: block.shopify_attributes 
+    %}
+{% enddoc %}
+
+{% comment %}
+ We render it here for faster initial page load and then also
+ apply the same math in javascript for dynamic swapping on PDPs.
+{% endcomment %}
+
+
+{%- liquid 
+  # get list of badges from shop.metafields.badges
+  assign shop_badges = shop.metafields.custom.badges.value 
+  assign badge_text = ""
+  assign badge_bg = "0, 0, 0"
+  assign badge_fg = "255, 255, 255"
+  assign badge_styles = "display: none;"
+
+  
+  if placement == "pdp"
+    # if on 'pdp' get variant badge list
+  else
+    # if on 'card' get product badge list
+    
+  endif
+
+  
+
+  assign badge_styles = "--color-badge-background: " | append: badge_bg
+
+-%}
+
+<span 
+  {{ shopify_attributes }}
+  data-content-badge 
+  class="badge"
+  style="{{ badge_styles }}">{{ badge_text }}</span>
