@@ -1,0 +1,11 @@
+{
+	"name": "dawn-avex-demo",
+	"description": "Basic Shopify dev script",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/CorySchulz/dawn-avex-demo.git"
+	},
+	"scripts": {
+		"dev": "shopify theme dev --store=cory-avex-demo.myshopify.com"
+	}
+}
