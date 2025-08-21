@@ -779,6 +779,7 @@
     // load shop badges into global Theme.badges
     // colors must have r,g,b values used in .badge class - no hex values
     Theme.badges = {};
+    Theme.badges.lowStockThreshold = {{ shop.metafields.custom.low_stock_threshold.value }};
     Theme.badges.shop = [
       {% for badge in shop_badges %}
         {% assign badge_text_color = badge.text_color.value | default: '#ffffff' %}

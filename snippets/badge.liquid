@@ -55,7 +55,7 @@
         endif
 
       elsif badge_name == "low-stock"
-        if variant.inventory_quantity >= low_stock_threshold
+        if variant.available and variant.inventory_quantity >= low_stock_threshold
           continue
         endif
 
