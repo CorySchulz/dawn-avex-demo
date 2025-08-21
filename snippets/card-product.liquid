@@ -127,7 +127,7 @@
 
           <div class="card__badge {{ settings.badge_position }}">
             {% render 'badge', 
-              product: card.card_product,
+              product: card_product,
               placement: 'card' %}
             {% comment %}
             {%- if card_product.available == false -%}

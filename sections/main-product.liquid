@@ -777,15 +777,19 @@
     };
 
     // load shop badges into global Theme.badges
+    // colors must have r,g,b values used in .badge class - no hex values
     Theme.badges = {};
     Theme.badges.shop = [
       {% for badge in shop_badges %}
+        {% assign badge_text_color = badge.text_color.value | default: '#ffffff' %}
+        {% assign badge_bg_color = badge.bg_color.value | default: '#000000' %}
+        {% assign badge_border_color = badge.border_color.value | default: '#000000' %}
         {
           name: "{{ badge.name | handleize }}",
           display_text: {{ badge.display_text | json }},
-          bg_color: "{{ badge.bg_color | default: '#000000' }}",
-          text_color: "{{ badge.text_color | default: '#ffffff' }}",
-          enabled: {{ badge.enabled | default: false }}
+          text_color: "{{ badge_text_color | color_to_rgb | remove: 'rgb(' | remove: ')'}}",
+          bg_color: "{{ badge_bg_color | color_to_rgb | remove: 'rgb(' | remove: ')'}}",
+          border_color: "{{ badge_border_color | color_to_rgb | remove: 'rgb(' | remove: ')'}}"
         }{% unless forloop.last %},{% endunless %}
       {% endfor %}
     ];

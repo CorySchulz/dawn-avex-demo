@@ -5,7 +5,7 @@
   @param shopify_attributes [string] attributes passed through from a block for the theme customizer
   @example
     {% render 'badge', 
-      product: card_product, 
+      product: product, 
       placement: 'pdp', 
       shopify_attributes: block.shopify_attributes 
     %}
@@ -18,29 +18,146 @@
 
 
 {%- liquid 
-  # get list of badges from shop.metafields.badges
-  assign shop_badges = shop.metafields.custom.badges.value 
+  # set defaults
   assign badge_text = ""
-  assign badge_bg = "0, 0, 0"
-  assign badge_fg = "255, 255, 255"
   assign badge_styles = "display: none;"
+  assign matching_badge = false
 
-  
+  # load shop metafields
+  assign shop_badges = shop.metafields.custom.badges.value 
+  assign low_stock_threshold = shop.metafields.custom.low_stock_threshold | default: 10
+
+  # load low stock threshold from shop metafields
+  assign variant = product.selected_or_first_available_variant
+  assign quantity_available = variant.inventory_quantity | default: 0
+  assign variant_available = variant.available 
+
+  # get badge list based on placement
   if placement == "pdp"
     # if on 'pdp' get variant badge list
+    assign product_badges = variant.metafields.custom.badges.value
   else
     # if on 'card' get product badge list
-    
+    assign product_badges = product.metafields.custom.product_card_badges.value
   endif
 
-  
+  # loop through shop badges - the order is important
+  for shop_badge in shop_badges
 
-  assign badge_styles = "--color-badge-background: " | append: badge_bg
+    assign badge_name = shop_badge.name | handleize
+
+    # PLACEMENT: PDP - check for special badges to see if they're active
+    if placement == "pdp"
+      if badge_name == "out-of-stock"
+        # skip if variant isn't out of stock
+        if variant.available == true
+          continue
+        endif
+
+      elsif badge_name == "low-stock"
+        if variant.inventory_quantity >= low_stock_threshold
+          continue
+        endif
+
+      elsif badge_name == "sale"
+        # skip if no compare price or compare price is < price
+        if variant.compare_at_price == blank or variant.compare_at_price < variant.price
+          continue
+        endif
+      endif
+    endif
+
+    # PLACEMENT: CARD - check variants for special badges to see if they're active
+    if placement == "card"
+ 
+      if badge_name == "out-of-stock"
+        # check if ALL variants are out of stock
+        assign has_item_in_stock = false
+        for _variant in product.variants
+          if _variant.available == true
+            assign has_item_in_stock = true 
+          endif
+        endfor
+
+        # skip if one variant is in stock
+        if has_item_in_stock == true
+          continue
+        endif
+
+      elsif badge_name == "low-stock"
+        # check if even all variant have low stock
+        assign has_item_above_threshold = false
+        for _variant in product.variants
+          if _variant.inventory_quantity >= low_stock_threshold
+            assign has_item_above_threshold = true
+            break
+          endif
+        endfor
+
+        # skip if not all have low stock
+        if has_item_above_threshold == true
+          continue
+        endif
+
+      elsif badge_name == "sale"
+        # check if even 1 variant is on sale
+        assign has_sale = false
+        for _variant in product.variants
+          if _variant.compare_at_price != blank and _variant.compare_at_price > _variant.price
+            assign has_sale = true
+            break
+          endif
+        endfor
+
+        # skip if none have sale
+        if has_sale == false
+          continue
+        endif
+      endif
+    endif
+
+    
+    # loop through product badges to see if we can find a match
+    for product_badge in product_badges
+      if shop_badge.name == product_badge.name
+        # we have a match!
+        assign matching_badge = shop_badge
+        break
+      endif
+    endfor 
+
+    # exit loop if we found a match
+    if matching_badge
+      break
+    endif
+  endfor 
+
+  # load matching badge into render vars
+  if matching_badge
+    assign badge_text = matching_badge.display_text
+
+    # process colors
+    assign badge_text_color = matching_badge.text_color.value | default: '#ffffff'
+    assign badge_bg_color = matching_badge.bg_color.value | default: '#000000'
+    assign badge_border_color = matching_badge.border_color.value | default: '#000000'
+
+    # must be in 'r,g,b' format for use in .badge class
+    assign badge_text_color = badge_text_color | color_to_rgb | remove: 'rgb(' | remove: ')'
+    assign badge_bg_color = badge_bg_color | color_to_rgb | remove: 'rgb(' | remove: ')'
+    assign badge_border_color = badge_border_color | color_to_rgb | remove: 'rgb(' | remove: ')'
+
+    # add colors to styles
+    assign badge_styles = "--color-badge-foreground: " | append: badge_text_color | append: '; '
+    assign badge_styles = badge_styles | append: "--color-badge-background: " | append: badge_bg_color | append: '; '
+    assign badge_styles = badge_styles | append: "--color-badge-border: " | append: badge_border_color | append: '; '
+  endif
 
 -%}
+
 
 <span 
   {{ shopify_attributes }}
   data-content-badge 
   class="badge"
   style="{{ badge_styles }}">{{ badge_text }}</span>
+
