@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (variant.available) continue;
         } else if (variant.available && badgeName == 'low-stock') {
           // skip this badge if product is not low stock
-          if (inventory[variantId] >= lowStockThreshold) continue;
+          if (inventory[variantId].quantity >= lowStockThreshold) continue;
         } else if (badgeName == 'sale') {
           // skip this badge if no compare price or compare price < price
           if (variant.compare_at_price == null || variant.compare_at_price < variant.price) {
