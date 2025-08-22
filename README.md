@@ -4,6 +4,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?color=informational)](/.github/CONTRIBUTING.md)
 
 [Getting started](#getting-started) |
+[Custom Badge System](#custom-badge-system) |
 [Staying up to date with Dawn changes](#staying-up-to-date-with-dawn-changes) |
 [Developer tools](#developer-tools) |
 [Contributing](#contributing) |
@@ -26,6 +27,44 @@ We recommend using Dawn as a starting point for theme development. [Learn more o
 > If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be [substantively different from Dawn](https://shopify.dev/themes/store/requirements#uniqueness) so that it provides added value for merchants. Learn about the [ways that you can use Dawn](https://shopify.dev/themes/tools/dawn#ways-to-use-dawn).
 
 Please note that the main branch may include code for features not yet released. The "stable" version of Dawn is available in the theme store.
+
+## Custom Badge System
+
+This Dawn fork includes a flexible badge system for product labels with custom colors and smart logic for special badges like "sale", "out of stock", and "low stock".
+
+### How It Works
+
+The system uses Shopify metaobjects and metafields to manage badges, with server-side rendering for performance and JavaScript integration for dynamic variant changes. Special badges ('out of stock', 'low stock', 'sale') have built-in logic, while custom badges display based on your assignments.
+
+### Setting Up Badges
+
+#### 1. Create Badges
+- Go to **Content > Metaobjects > Badge**
+- Click **"Add entry"** and configure:
+  - **Name**: Badge identifier (use 'out of stock', 'low stock', or 'sale' for special behaviors)
+  - **Display text**: Text shown on badge
+  - **Colors**: Text, background, and border colors
+
+#### 2. Configure Badge Priority
+- Go to **Settings > General > Store assets: Metafields**
+- Add badges to the **"Badges"** list in priority order
+- Set **"Low stock threshold"** (default: 10)
+
+#### 3. Assign to Products & Variants
+- **Products**: Add badges to "Product card badges" metafield
+- **Variants**: Add badges to "Badges" metafield for variant-specific display
+
+### Code Structure
+
+- `snippets/badge.liquid` - Server-side rendering logic
+- `assets/badges.js` - Dynamic variant change handling
+- Integrates with Dawn's pub/sub system for seamless variant updates
+
+### Special Badge Logic
+
+- **Product cards**: 'Out of stock' and 'low stock' only show when ALL variants meet criteria
+- **Product pages**: Badges reflect the currently selected variant's status
+- **Sale badges**: Show when compare_at_price > price
 
 ## Staying up to date with Dawn changes
 
